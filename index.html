@@ -1,19 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
-
-  <head>
-    <meta charset="UTF-8">
-    <title>Untitled</title>
-    
-
-  </head>
-    
-  <body>
-  <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>菌コロニー バトル（固有技＋アイテム拡張版）</title>
+  <title>菌コロニー バトル</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no" />
   <style>
     * { box-sizing: border-box; }
@@ -164,6 +153,10 @@
       gap: 6px;
       margin-left: auto;
     }
+    #objectiveLine { color: #facc15; font-size: 11px; min-height: 1.4em; }
+    #commandHint { color: #93c5fd; font-size: 11px; min-height: 1.4em; }
+    #commandBtn.aiming { outline: 2px solid #38bdf8; }
+    #gameCanvas.aiming { cursor: crosshair; }
     .ctrlBtn {
       padding: 4px 10px;
       border-radius: 999px;
@@ -322,10 +315,13 @@
         <div>支配率: <span id="controlText">0%</span></div>
 
         <div id="controlButtons">
+          <button class="ctrlBtn" id="commandBtn">進軍指令</button>
           <button class="ctrlBtn" id="pauseBtn">一時停止</button>
           <button class="ctrlBtn active" id="statusToggleBtn">ステータス表示: ON</button>
         </div>
       </div>
+      <div id="objectiveLine"></div>
+      <div id="commandHint"></div>
     </div>
 
     <!-- 強化（アップグレード＋スキル） -->
@@ -387,6 +383,7 @@
         <p>時間経過と侵食でポイントを稼ぎ、増殖・攻撃・防御やスキルを強化します。</p>
         <p>10秒ごとに20%で突然変異が発生します（良い変異と悪い変異が半々／重複あり）。</p>
         <p>空きマスにはアイテムが出現し、自分も敵も拾えます。</p>
+        <p>光る栄養核の周囲に8マス以上広がり、その場所の菌の過半数を占めると追加ポイントを獲得できます。進軍指令を押して前線近くをタップすると、その方向の増殖を一時的に促せます。</p>
         <p>勝利条件：シャーレ100%支配、または他コロニー全滅です。</p>
         <button class="overlayBtn" id="startButton">コロニーを選ぶ</button>
       </div>
@@ -449,6 +446,9 @@
       const pauseBtn = document.getElementById("pauseBtn");
       const statusToggleBtn = document.getElementById("statusToggleBtn");
       const pausedBadge = document.getElementById("pausedBadge");
+      const commandBtn = document.getElementById("commandBtn");
+      const commandHint = document.getElementById("commandHint");
+      const objectiveLine = document.getElementById("objectiveLine");
 
       const itemLegend = document.getElementById("itemLegend");
 
@@ -492,6 +492,19 @@
       let mutationTimer = 0;
       let items = [];
       let itemSpawnTimer = 0;
+      let nutrientZones = [];
+      let zoneTimer = 0;
+      let zoneRewardTimer = 0;
+      const ZONE_PERIOD = 35;
+      const ZONE_RADIUS = 4;
+      let command = null;
+      let commandCooldown = 0;
+      let isAiming = false;
+      const COMMAND_DURATION = 14;
+      const COMMAND_COOLDOWN = 20;
+      let dishMask = [];
+      let saturated = [];
+      let saturationTimer = 0;
 
       const BASE_CELL_LIFETIME = 50;
       const SAT_CELL_LIFETIME  = 22;
@@ -566,13 +579,15 @@
         cellSize = (dishRadius * 2) / gridW;
         dishOffsetX = dishCx - dishRadius;
         dishOffsetY = dishCy - dishRadius;
+        dishMask = Array.from({length:gridH}, (_,y) =>
+          Array.from({length:gridW}, (_,x) => {
+            const dx=x+0.5-gridW/2, dy=y+0.5-gridH/2;
+            return dx*dx+dy*dy <= (gridW/2)*(gridW/2);
+          }));
       }
 
       function cellInsideDish(x, y) {
-        const px = dishOffsetX + (x + 0.5) * cellSize;
-        const py = dishOffsetY + (y + 0.5) * cellSize;
-        const dx = px - dishCx, dy = py - dishCy;
-        return (dx*dx + dy*dy) <= dishRadius*dishRadius;
+        return !!dishMask[y]?.[x];
       }
 
       function isSaturated(x, y) {
@@ -587,6 +602,10 @@
           }
         }
         return true;
+      }
+      function refreshSaturation() {
+        saturated = Array.from({length:gridH}, (_,y) =>
+          Array.from({length:gridW}, (_,x) => grid[y][x]>=0 && isSaturated(x,y)));
       }
 
       // ===== 8コロニー初期化 =====
@@ -653,7 +672,7 @@
           while (!ok) {
             gx = Math.floor(Math.random() * (gridW - 2 * marginCells)) + marginCells;
             gy = Math.floor(Math.random() * (gridH - 2 * marginCells)) + marginCells;
-            ok = true;
+            ok = cellInsideDish(gx,gy);
             for (const s of seeds) {
               if (Math.hypot(gx - s.gx, gy - s.gy) < 8) { ok = false; break; }
             }
@@ -876,6 +895,69 @@
         updateSkillUI();
       }
 
+      function resetTactics() {
+        nutrientZones = [];
+        zoneTimer = 0;
+        zoneRewardTimer = 0;
+        command = null;
+        commandCooldown = 0;
+        isAiming = false;
+        saturationTimer = 0;
+        commandBtn.classList.remove("aiming");
+        canvas.classList.remove("aiming");
+        commandHint.textContent = "";
+        objectiveLine.textContent = "";
+        updateCommandUI();
+      }
+
+      function updateCommandUI() {
+        commandBtn.disabled = gameState !== "running" || isPaused || commandCooldown > 0;
+        commandBtn.textContent = commandCooldown > 0
+          ? `進軍指令 ${Math.ceil(commandCooldown)}秒` : (isAiming ? "地点を選択中" : "進軍指令");
+      }
+
+      function placeNutrientZones() {
+        const next = [];
+        for (let i=0; i<2; i++) {
+          for (let trial=0; trial<250; trial++) {
+            const x=5+((Math.random()*(gridW-10))|0);
+            const y=5+((Math.random()*(gridH-10))|0);
+            if (!cellInsideDish(x,y) || !cellInsideDish(x+ZONE_RADIUS,y) || !cellInsideDish(x-ZONE_RADIUS,y) ||
+                !cellInsideDish(x,y+ZONE_RADIUS) || !cellInsideDish(x,y-ZONE_RADIUS)) continue;
+            if (next.some(z => Math.hypot(z.x-x,z.y-y)<18)) continue;
+            if (seeds.some(s => Math.hypot(s.gx-x,s.gy-y)<7)) continue;
+            next.push({x,y,owner:-1});
+            break;
+          }
+        }
+        nutrientZones = next;
+        zoneTimer = ZONE_PERIOD;
+        addLog("栄養核が出現。周辺の菌を8マス以上・過半数で占めると得点", "info");
+        objectiveLine.textContent=`栄養核 0/${next.length} 占有・1基あたり毎秒8点 ｜ 移動まで ${ZONE_PERIOD}秒`;
+      }
+
+      function updateNutrientZones() {
+        for (const z of nutrientZones) {
+          const counts = new Array(colonies.length).fill(0);
+          let occupied = 0;
+          for (let dy=-ZONE_RADIUS; dy<=ZONE_RADIUS; dy++) for (let dx=-ZONE_RADIUS; dx<=ZONE_RADIUS; dx++) {
+            if (dx*dx+dy*dy>ZONE_RADIUS*ZONE_RADIUS) continue;
+            const owner=grid[z.y+dy][z.x+dx];
+            if (owner>=0) { counts[owner]++; occupied++; }
+          }
+          let best=-1, max=0;
+          counts.forEach((n,i) => { if (n>max) { max=n; best=i; } });
+          // 同数または占有面積が少ない場合は中立とする。
+          z.owner = max>=8 && max>occupied/2 ? best : -1;
+          if (z.owner>=0) {
+            if (z.owner===playerColonyId) score+=8;
+            else colonies[z.owner].energy+=8;
+          }
+        }
+        const mine=nutrientZones.filter(z=>z.owner===playerColonyId).length;
+        objectiveLine.textContent=`栄養核 ${mine}/${nutrientZones.length} 占有・1基あたり毎秒8点 ｜ 移動まで ${Math.ceil(zoneTimer)}秒`;
+      }
+
       function startSelecting() {
         gameState = "select";
         grid = null; ageGrid = null;
@@ -892,6 +974,7 @@
         mutationTimer = 0;
         items = [];
         itemSpawnTimer = 0;
+        resetTactics();
         isPaused = false;
         pausedBadge.style.display = "none";
         pauseBtn.textContent = "一時停止";
@@ -910,7 +993,7 @@
           for (let dy = -1; dy <= 1; dy++) {
             for (let dx = -1; dx <= 1; dx++) {
               const x = s.gx + dx, y = s.gy + dy;
-              if (x < 0 || x >= gridW || y < 0 || y >= gridH) continue;
+              if (x < 0 || x >= gridW || y < 0 || y >= gridH || !cellInsideDish(x,y)) continue;
               grid[y][x] = s.colonyId;
               ageGrid[y][x] = 0;
             }
@@ -922,6 +1005,9 @@
         mutationTimer = 0; items = []; itemSpawnTimer = 0;
         resetSkills();
         gameState = "running";
+        resetTactics();
+        refreshSaturation();
+        placeNutrientZones();
         updateUpgradeUI();
         updateLegendUI();
         addLog("ゲーム開始: " + colonies[playerColonyId].displayName, "info");
@@ -1069,6 +1155,7 @@
           const d=dirs[(Math.random()*4)|0];
           const nx=x+d[0], ny=y+d[1];
           if(nx<0||nx>=gridW||ny<0||ny>=gridH) continue;
+          if(!cellInsideDish(nx,ny)) continue;
           const owner=grid[ny][nx];
           if(owner===colonyId) continue;
           grid[ny][nx]=colonyId;
@@ -1286,6 +1373,7 @@
           const d=dirs[(Math.random()*4)|0];
           const nx=x+d[0], ny=y+d[1];
           if(nx<0||nx>=gridW||ny<0||ny>=gridH) continue;
+          if(!cellInsideDish(nx,ny)) continue;
 
           if(grid[ny][nx]>=0 && grid[ny][nx]!==colonyId){
             if(Math.random()<0.8){
@@ -1518,6 +1606,7 @@
             const d=dirs[(Math.random()*4)|0];
             const nx=x+d[0], ny=y+d[1];
             if(nx<0||nx>=gridW||ny<0||ny>=gridH) continue;
+            if(!cellInsideDish(nx,ny)) continue;
             const targetOwner=grid[ny][nx];
             if(targetOwner>=0 && targetOwner!==colonyId){
               if(Math.random()< (focused?0.9:0.8)){
@@ -1544,11 +1633,18 @@
 
           const colony=colonies[owner];
           const base=getGrowthRate(colony);
-          if(Math.random()>base) continue;
 
           const d=dirs[(Math.random()*4)|0];
           const nx=x+d[0], ny=y+d[1];
-          if(nx<0||nx>=gridW||ny<0||ny>=gridH) continue;
+          if(nx<0||nx>=gridW||ny<0||ny>=gridH||!cellInsideDish(nx,ny)) continue;
+
+          let growthChance=base;
+          if(owner===playerColonyId && command && command.time>0) {
+            const from=(x-command.x)**2+(y-command.y)**2;
+            const to=(nx-command.x)**2+(ny-command.y)**2;
+            if(from<=16*16 && to<from) growthChance=Math.min(0.95,base*2.2);
+          }
+          if(Math.random()>growthChance) continue;
 
           const targetOwner=grid[ny][nx];
           if(targetOwner===owner) continue;
@@ -1668,7 +1764,7 @@
             const owner = grid[y][x];
             const col = colonies[owner];
 
-            let ttlBase = isSaturated(x, y) ? SAT_CELL_LIFETIME : BASE_CELL_LIFETIME;
+            let ttlBase = saturated[y]?.[x] ? SAT_CELL_LIFETIME : BASE_CELL_LIFETIME;
 
             if ((col.mutationState?.shortLived || 0) > 0) {
               ttlBase *= Math.pow(0.85, col.mutationState.shortLived);
@@ -1763,11 +1859,9 @@
 
         for (let y = 0; y < gridH; y++) {
           for (let x = 0; x < gridW; x++) {
+            if (!cellInsideDish(x,y)) continue;
             const px = dishOffsetX + (x + 0.5) * cs;
             const py = dishOffsetY + (y + 0.5) * cs;
-            const dx = px - dishCx, dy = py - dishCy;
-            const insideDish = (dx*dx + dy*dy) <= dishRadius*dishRadius;
-            if (!insideDish) continue;
 
             capacityCells++;
 
@@ -1877,20 +1971,39 @@
       // ===== 描画：丸のみ =====
       function drawSimpleColonies() {
         const cs = cellSize;
-        for (let y = 0; y < gridH; y++) {
-          for (let x = 0; x < gridW; x++) {
-            const owner = grid[y][x];
-            if (owner < 0) continue;
-            if (!cellInsideDish(x, y)) continue;
-
-            const px = dishOffsetX + (x + 0.5) * cs;
-            const py = dishOffsetY + (y + 0.5) * cs;
-
-            ctx.beginPath();
-            ctx.arc(px, py, cs * 0.46, 0, Math.PI * 2);
-            ctx.fillStyle = colonies[owner].color;
-            ctx.fill();
+        for (const col of colonies) {
+          ctx.beginPath();
+          for (let y=0; y<gridH; y++) for (let x=0; x<gridW; x++) {
+            if (grid[y][x]!==col.id || !cellInsideDish(x,y)) continue;
+            const px=dishOffsetX+(x+0.5)*cs, py=dishOffsetY+(y+0.5)*cs;
+            ctx.moveTo(px+cs*0.46,py);
+            ctx.arc(px,py,cs*0.46,0,Math.PI*2);
           }
+          ctx.fillStyle=col.color;
+          ctx.fill();
+        }
+      }
+
+      function drawTactics() {
+        for (const z of nutrientZones) {
+          const px=dishOffsetX+(z.x+0.5)*cellSize;
+          const py=dishOffsetY+(z.y+0.5)*cellSize;
+          ctx.beginPath(); ctx.arc(px,py,ZONE_RADIUS*cellSize,0,Math.PI*2);
+          ctx.fillStyle=z.owner>=0 ? colonies[z.owner].color+"40" : "#facc1530";
+          ctx.fill();
+          ctx.strokeStyle=z.owner>=0 ? colonies[z.owner].color : "#facc15";
+          ctx.lineWidth=2.5; ctx.stroke();
+          ctx.beginPath(); ctx.arc(px,py,Math.max(4,cellSize*0.6),0,Math.PI*2);
+          ctx.fillStyle="#fef08a"; ctx.fill();
+        }
+        if (command && command.time>0) {
+          const px=dishOffsetX+(command.x+0.5)*cellSize;
+          const py=dishOffsetY+(command.y+0.5)*cellSize;
+          ctx.beginPath(); ctx.arc(px,py,16*cellSize,0,Math.PI*2);
+          ctx.strokeStyle="rgba(147,197,253,0.35)"; ctx.lineWidth=1; ctx.stroke();
+          ctx.beginPath(); ctx.arc(px,py,Math.max(5,cellSize),0,Math.PI*2);
+          ctx.fillStyle="#e0f2fe"; ctx.fill();
+          ctx.strokeStyle="#0284c7"; ctx.lineWidth=2; ctx.stroke();
         }
       }
 
@@ -1960,6 +2073,7 @@
         }
 
         drawSimpleColonies();
+        drawTactics();
         drawItems();
 
         const overlayInfo = computeOverlayData();
@@ -1968,7 +2082,7 @@
 
       function gameLoop(timestamp){
         if(!lastTimestamp) lastTimestamp=timestamp;
-        const dt=timestamp-lastTimestamp; lastTimestamp=timestamp;
+        const dt=Math.min(250,timestamp-lastTimestamp); lastTimestamp=timestamp;
 
         if(gameState==="running" && !isPaused){
           timeAccumulator+=dt;
@@ -1979,6 +2093,22 @@
 
           itemSpawnTimer+=dtSec;
           while(itemSpawnTimer>=5){spawnItemIfNeeded(); itemSpawnTimer-=5;}
+
+          zoneTimer-=dtSec;
+          if(zoneTimer<=0) placeNutrientZones();
+          zoneRewardTimer+=dtSec;
+          if(zoneRewardTimer>=1) {
+            zoneRewardTimer-=1;
+            updateNutrientZones();
+          }
+          saturationTimer+=dtSec;
+          if(saturationTimer>=1){refreshSaturation();saturationTimer=0;}
+          if(commandCooldown>0) commandCooldown=Math.max(0,commandCooldown-dtSec);
+          if(command) {
+            command.time-=dtSec;
+            if(command.time<=0) command=null;
+          }
+          updateCommandUI();
 
           while(timeAccumulator>=STEP_MS){
             stepSimulation();
@@ -2015,6 +2145,7 @@
         restartButton.style.display="none";
         resultText.style.display="none";
         gameState="intro";
+        resetTactics();
         score=0; scoreText.textContent="0"; controlText.textContent="0%";
         colonies=[]; logs.length=0; items=[];
         renderLogs(); updateSkillUI();
@@ -2088,6 +2219,38 @@
         isPaused = !isPaused;
         pauseBtn.textContent = isPaused ? "再開" : "一時停止";
         pausedBadge.style.display = isPaused ? "block" : "none";
+        updateCommandUI();
+      });
+
+      commandBtn.addEventListener("click", () => {
+        if (gameState!=="running" || isPaused || commandCooldown>0) return;
+        isAiming=!isAiming;
+        commandBtn.classList.toggle("aiming",isAiming);
+        canvas.classList.toggle("aiming",isAiming);
+        commandHint.textContent=isAiming ? "シャーレ内の前線近くをタップして進軍先を指定してください" : "";
+        updateCommandUI();
+      });
+      canvas.addEventListener("click", event => {
+        if (!isAiming || gameState!=="running" || isPaused || !grid) return;
+        const rect=canvas.getBoundingClientRect();
+        const x=Math.floor(((event.clientX-rect.left)*viewSize/rect.width-dishOffsetX)/cellSize);
+        const y=Math.floor(((event.clientY-rect.top)*viewSize/rect.height-dishOffsetY)/cellSize);
+        if(x<0||x>=gridW||y<0||y>=gridH||!cellInsideDish(x,y)) return;
+        let near=false;
+        for(let dy=-16;dy<=16 && !near;dy++) for(let dx=-16;dx<=16;dx++) {
+          if(dx*dx+dy*dy>16*16) continue;
+          const nx=x+dx, ny=y+dy;
+          if(nx>=0&&nx<gridW&&ny>=0&&ny<gridH&&grid[ny][nx]===playerColonyId){near=true;break;}
+        }
+        if(!near){ commandHint.textContent="自分の菌から近い地点を選んでください"; return; }
+        command={x,y,time:COMMAND_DURATION};
+        commandCooldown=COMMAND_COOLDOWN;
+        isAiming=false;
+        commandBtn.classList.remove("aiming");
+        canvas.classList.remove("aiming");
+        commandHint.textContent=`進軍中：指定地点へ近づく増殖が ${COMMAND_DURATION}秒間促進されます`;
+        addLog("進軍指令を発動", "special");
+        updateCommandUI();
       });
 
       statusToggleBtn.addEventListener("click", () => {
@@ -2181,8 +2344,4 @@
     });
   </script>
 </body>
-</html>
-    
-  </body>
-  
 </html>
