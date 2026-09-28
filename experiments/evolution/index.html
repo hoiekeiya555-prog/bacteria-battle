@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071923">
+<title>菌コロニー バトル：進化戦</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23071923'/%3E%3Ccircle cx='25' cy='30' r='17' fill='%232cddb1'/%3E%3Ccircle cx='44' cy='41' r='9' fill='%23f9c86a'/%3E%3C/svg%3E">
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#e5f3f5;background:#071923;font-size:16px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#183b46 0,#071923 55%)}button{font:inherit;cursor:pointer}button:disabled{cursor:default;opacity:.46}
+.shell{max-width:1170px;margin:auto;padding:20px 18px 32px}.head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:15px}.brand{font-size:1.35rem;font-weight:800;letter-spacing:.03em}.brand small{display:block;font-size:.72rem;font-weight:600;color:#8daeb5;letter-spacing:.13em}.headStats{display:flex;gap:9px;flex:1;justify-content:flex-end;flex-wrap:wrap}.stat{background:#102a34;border:1px solid #28505b;border-radius:12px;min-width:98px;padding:7px 12px}.stat b{display:block;font-size:1.2rem;font-variant-numeric:tabular-nums}.stat span{font-size:.73rem;color:#96b3bb}.stat.primary{border-color:#3acaa8}.layout{display:grid;grid-template-columns:minmax(360px,1fr) 330px;gap:17px;align-items:start}.arena{position:relative;background:linear-gradient(145deg,#102a34,#0b202a);border:1px solid #315361;border-radius:22px;padding:12px;box-shadow:0 25px 65px #0005}.arena canvas{display:block;width:100%;max-width:680px;aspect-ratio:1;margin:auto;border-radius:50%;touch-action:manipulation;cursor:crosshair}.arenaHint{position:absolute;left:24px;right:24px;bottom:24px;background:#071923e8;color:#c7e8e8;border:1px solid #426778;border-radius:10px;padding:8px 12px;font-size:.81rem;text-align:center;pointer-events:none}.side{display:grid;gap:13px}.panel{background:#102a34;border:1px solid #315361;border-radius:16px;padding:15px}.panel h2{font-size:.95rem;margin:0 0 11px;color:#b5d8dc}.points{display:grid;gap:8px}.point{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;background:#0b222c;font-size:.86rem}.point .tag{font-weight:800;color:#f9c86a}.point small{color:#9ebdc3}.teamRows{display:grid;gap:10px}.teamRow{display:grid;grid-template-columns:12px 1fr auto;align-items:center;gap:9px;font-size:.85rem}.swatch{width:11px;height:11px;border-radius:50%}.track{height:5px;border-radius:6px;background:#23414a;margin-top:4px;overflow:hidden}.track i{display:block;height:100%;border-radius:6px}.hint{font-size:.83rem;color:#b6d0d4;line-height:1.55;margin:0}.buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.ability{min-height:80px;text-align:left;background:#17353f;color:#e7f6f6;border:1px solid #3c6671;border-radius:12px;padding:9px 11px}.ability:hover:enabled,.ability.active{border-color:#51e0c1;background:#1b494e}.ability strong{display:block;font-size:.85rem}.ability span{display:block;margin-top:4px;font-size:.73rem;color:#b0d0d3;line-height:1.3}.ability em{display:block;margin-top:3px;font-size:.73rem;font-style:normal;color:#f8cb75}.toolbar{display:flex;gap:8px;margin-top:10px}.quiet{border:1px solid #3b6470;background:#12303a;color:#d4ecee;padding:8px 12px;border-radius:9px;font-size:.82rem}.message{min-height:2.7em;color:#f5d88d;font-size:.8rem;line-height:1.4;margin-top:9px}.footerNote{font-size:.74rem;color:#89aeb5;margin-top:13px;line-height:1.5}.overlay{position:fixed;inset:0;background:#031119d9;display:flex;align-items:center;justify-content:center;padding:20px;z-index:5;backdrop-filter:blur(5px)}.modal{width:min(720px,100%);max-height:min(90vh,820px);overflow:auto;border:1px solid #4b717a;border-radius:20px;background:#0d2630;padding:24px;box-shadow:0 25px 80px #000a}.modal h1{font-size:1.65rem;margin:0 0 9px}.modal p{line-height:1.6;color:#bfd7da;margin:0 0 16px}.choose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{border:1px solid #3a626d;border-radius:13px;background:#15343d;color:#e9f9f8;padding:14px;text-align:left;min-height:118px}.card:hover{border-color:#59d9bf;background:#1a4550}.card strong{display:block;font-size:1rem;margin-bottom:7px}.card span{font-size:.84rem;line-height:1.45;color:#b9d5d9}.modal .small{font-size:.82rem;color:#92b7be}.modalActions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.primaryBtn{background:#26c7a0;color:#05221f;border:0;border-radius:10px;padding:10px 18px;font-weight:800}.hide{display:none!important}
+@media(max-width:860px){.shell{padding:12px}.layout{grid-template-columns:1fr}.side{grid-template-columns:repeat(2,minmax(0,1fr))}.side .wide{grid-column:1/-1}.arena{padding:7px}.arenaHint{bottom:17px;left:17px;right:17px}.stat{min-width:75px}.headStats{justify-content:flex-start}.brand{width:100%}}
+@media(max-width:570px){.side{grid-template-columns:1fr}.side .wide{grid-column:auto}.stat{flex:1;min-width:70px;padding:5px 9px}.stat b{font-size:1rem}.stat span{font-size:.67rem}.choose{grid-template-columns:1fr}.card{min-height:75px}.modal{padding:18px}.ability{min-height:76px}.arenaHint{font-size:.72rem}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="head"><div class="brand">菌コロニー バトル <small>進化戦・実験版</small></div><div class="headStats"><div class="stat primary"><b id="clock">2:30</b><span>残り時間</span></div><div class="stat"><b id="myScore">0 / 220</b><span>あなたの研究点</span></div><div class="stat"><b id="energy">25</b><span>養分</span></div></div></header>
+<div class="layout">
+<section class="arena" aria-label="シャーレ"><canvas id="dish" aria-label="菌の勢力図。タップで進軍地点を指定"></canvas><div class="arenaHint" id="arenaHint">シャーレをタップして進軍先を決めてください</div></section>
+<aside class="side">
+<div class="panel"><h2>栄養核の争奪</h2><div class="points" id="points"></div><p class="footerNote">占領中の栄養核1基につき毎秒1研究点。先に220点を取るか、時間切れで最多得点なら勝利です。</p></div>
+<div class="panel"><h2>勢力</h2><div class="teamRows" id="teams"></div></div>
+<div class="panel wide"><h2>介入する</h2><div class="buttons" id="abilities"></div><div class="toolbar"><button class="quiet" id="pause">一時停止</button><button class="quiet" id="cancel">選択を解除</button></div><div class="message" id="message" role="status"></div><p class="hint">技を選んでからシャーレをタップ。進軍先の変更は無料です。Q・W・E・Rキーでも技を選べます。</p></div>
+</aside></div>
+</div>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+<script>
+(()=>{
+'use strict';
+const N=64,NN=N*N,CX=32,CY=32,R=30,DURATION=150,WIN_SCORE=220,STEP=.1;
+const palette=['#38dfb5','#ff776e','#b694ff','#6aa8ff'];
+const species=[
+ {id:'explorer',name:'探索菌',desc:'増殖が速く、遠方に新しい拠点を作れる。攻撃には弱い。',growth:1.22,attack:-.2,defense:-.2,special:'遠隔胞子',specialDesc:'空き地ならどこにでも拠点を作る'},
+ {id:'predator',name:'捕食菌',desc:'敵との境界で強い。守りは薄いが捕食波で突破する。',growth:1,attack:1,defense:-.45,special:'捕食波',specialDesc:'前線付近の敵をまとめて奪う'},
+ {id:'fortress',name:'被膜菌',desc:'領土を奪われにくい。増殖は遅いが栄養核を守れる。',growth:.90,attack:-.2,defense:.8,special:'城壁形成',specialDesc:'広い保護膜を張り空き地も埋める'},
+ {id:'adapter',name:'適応菌',desc:'養分の獲得が多く、進化時の選択肢も増える。',growth:1.04,attack:.1,defense:.1,special:'代謝再編',specialDesc:'養分を回復し、通常技を即時再使用できる'}
+];
+const genePool=[
+ {id:'swift',name:'快速分裂',desc:'空き地への増殖が30%速くなる',apply:t=>t.growth*=1.3},
+ {id:'fang',name:'捕食酵素',desc:'敵を侵食する攻撃力が1上がる',apply:t=>t.attack+=1},
+ {id:'film',name:'厚い被膜',desc:'攻撃に耐える防御力が1上がる',apply:t=>t.defense+=1},
+ {id:'metabolism',name:'高効率代謝',desc:'養分の自然回復量が35%増える',apply:t=>t.metabolism*=1.35},
+ {id:'spores',name:'胞子の連鎖',desc:'胞子投下の範囲が広がる',apply:t=>t.sporeRadius++},
+ {id:'venom',name:'濃い毒素',desc:'毒素波の範囲が広がる',apply:t=>t.toxinRadius++},
+ {id:'signal',name:'強い誘引',desc:'進軍先へ向かう増殖がさらに速くなる',apply:t=>t.signal+=.45},
+ {id:'thrift',name:'省エネ細胞',desc:'技と固有技の養分消費が20%減る',apply:t=>t.costFactor*=.8},
+ {id:'anchor',name:'定着能力',desc:'栄養核から得る研究点が毎秒0.3増える',apply:t=>t.nodeBonus+=.3}
+];
+const abilityDefs=[
+ {id:'spore',key:'Q',name:'胞子投下',cost:25,cd:16,desc:'前線近くの空き地に拠点'},
+ {id:'toxin',key:'W',name:'毒素波',cost:30,cd:19,desc:'前線近くの敵を消す'},
+ {id:'shield',key:'E',name:'保護膜',cost:26,cd:21,desc:'守る地点を指定・12秒'},
+ {id:'special',key:'R',name:'固有技',cost:48,cd:34,desc:''}
+];
+const canvas=document.getElementById('dish'),ctx=canvas.getContext('2d'),mini=document.createElement('canvas'),mctx=mini.getContext('2d');
+mini.width=mini.height=N;
+const el=id=>document.getElementById(id);
+const overlay=el('overlay'),modal=el('modal');
+const valid=new Uint8Array(NN),cell=new Int8Array(NN),age=new Uint16Array(NN);
+const coords=i=>({x:i%N,y:(i/N)|0}),idx=(x,y)=>y*N+x,inside=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&valid[idx(x,y)]===1;
+const rand=a=>a[(Math.random()*a.length)|0],clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=idx(x,y);valid[i]=((x+.5-CX)**2+(y+.5-CY)**2<=R*R)?1:0}
+const nodes=[{x:32,y:19,label:'A',owner:-1},{x:18,y:33,label:'B',owner:-1},{x:46,y:33,label:'C',owner:-1},{x:32,y:45,label:'D',owner:-1},{x:32,y:32,label:'E',owner:-1}];
+let teams=[],state='intro',time=0,acc=0,last=0,draftIndex=0,aim=null,notice='',noticeUntil=0,shields=[],fronts=[[],[],[],[]],rallyTimer=0,dirty=true,offscreenImage=null;
+const seeds=[[32,52],[32,12],[11,33],[53,33]];
+function team(id,type){return {id,type,name:id===0?'あなた':`${['','赤','紫','青'][id]}コロニー`,color:palette[id],cells:0,energy:id===0?25:28,score:0,growth:type.growth*(id===0?1:.85),attack:type.attack-(id===0?0:.2),defense:type.defense-(id===0?0:.2),metabolism:1,signal:1,sporeRadius:2,toxinRadius:4,costFactor:1,nodeBonus:0,chosen:new Set(),cool:{},rally:null}}
+function reset(type){
+ cell.fill(-1);age.fill(0);teams=[team(0,type),team(1,species[1]),team(2,species[2]),team(3,species[0])];
+ teams[0].rally={x:32,y:45};
+ for(let k=0;k<4;k++){const [sx,sy]=seeds[k];for(let y=sy-1;y<=sy+1;y++)for(let x=sx-1;x<=sx+1;x++)if(inside(x,y))cell[idx(x,y)]=k}
+ nodes.forEach(n=>n.owner=-1);shields=[];time=0;acc=0;last=0;draftIndex=0;aim=null;notice='';rallyTimer=0;state='running';dirty=true;
+ el('overlay').classList.add('hide');el('pause').textContent='一時停止';buildAbilities();setMessage('最初は近くのDへ進みます。次の進軍先をタップで指定してください。',6);updateUI()
+}
+function buildAbilities(){const box=el('abilities');box.innerHTML='';for(const d of abilityDefs){const b=document.createElement('button');b.className='ability';b.dataset.ability=d.id;for(const tag of ['strong','span','em'])b.appendChild(document.createElement(tag));box.appendChild(b)}}
+function setMessage(text,seconds=2.8){notice=text;noticeUntil=time+seconds;el('message').textContent=text}
+function ownedNear(x,y,owner,range=13){const rr=range*range;for(let yy=Math.max(0,y-range);yy<=Math.min(N-1,y+range);yy++)for(let xx=Math.max(0,x-range);xx<=Math.min(N-1,x+range);xx++)if((xx-x)**2+(yy-y)**2<=rr&&cell[idx(xx,yy)]===owner)return true;return false}
+function cost(t,def){return Math.ceil(def.cost*t.costFactor)}
+function canUse(t,def){return t.energy>=cost(t,def)&&time>=(t.cool[def.id]||0)}
+function affectedShield(x,y,owner){return shields.some(s=>s.owner===owner&&s.until>time&&(s.x-x)**2+(s.y-y)**2<=s.radius*s.radius)}
+function fillCircle(x,y,r,owner,mode){let affected=0;for(let yy=Math.max(0,y-r);yy<=Math.min(N-1,y+r);yy++)for(let xx=Math.max(0,x-r);xx<=Math.min(N-1,x+r);xx++){
+ if((xx-x)**2+(yy-y)**2>r*r||!inside(xx,yy))continue;
+ const i=idx(xx,yy),old=cell[i];let change=false;
+ if(mode==='empty')change=old===-1;
+ if(mode==='attack')change=old>=0&&old!==owner&&Math.random()<.66;
+ if(mode==='clear')change=old>=0&&old!==owner&&Math.random()<.72;
+ if(change){cell[i]=mode==='clear'?-1:owner;age[i]=0;affected++}
+ }dirty=dirty||affected>0;return affected}
+function useAbility(t,id,x,y){
+ const def=abilityDefs.find(d=>d.id===id);if(!def||!canUse(t,def))return false;
+ const remote=id==='special'&&t.type.id==='explorer';
+ if(id!=='special'||t.type.id!=='adapter'){
+   if(!inside(x,y)){if(t.id===0)setMessage('シャーレ内を指定してください');return false}
+   if(!remote&&!ownedNear(x,y,t.id,13)){if(t.id===0)setMessage('自分の前線から近い地点を選んでください');return false}
+ }
+ let used=0;
+ if(id==='spore'){used=fillCircle(x,y,t.sporeRadius,t.id,'empty')}
+ else if(id==='toxin'){used=fillCircle(x,y,t.toxinRadius,t.id,'clear')}
+ else if(id==='shield'){shields.push({x,y,owner:t.id,radius:6,until:time+12});used=1}
+ else if(t.type.id==='explorer'){used=fillCircle(x,y,3,t.id,'empty')}
+ else if(t.type.id==='predator'){used=fillCircle(x,y,5,t.id,'attack')}
+ else if(t.type.id==='fortress'){shields.push({x,y,owner:t.id,radius:8,until:time+18});used=1+fillCircle(x,y,3,t.id,'empty')}
+ else if(t.type.id==='adapter'){t.energy=Math.min(100,t.energy+40);for(const d of abilityDefs.slice(0,3))t.cool[d.id]=0;used=1}
+ if(!used){if(t.id===0)setMessage('対象がありません。別の地点を選んでください');return false}
+ t.energy-=cost(t,def);t.cool[id]=time+def.cd;
+ if(t.id===0){aim=null;setMessage(`${id==='special'?t.type.special:def.name}を発動`,3);updateUI()}
+ dirty=true;return true
+}
+function chooseAim(id){if(state!=='running')return;const t=teams[0],def=abilityDefs.find(d=>d.id===id);if(!canUse(t,def))return;
+ if(id==='special'&&t.type.id==='adapter'){useAbility(t,id);return}
+ aim=aim===id?null:id;el('arenaHint').textContent=aim?`${id==='special'?t.type.special:def.name}：効果を与える場所をタップ`:'シャーレをタップして進軍先を決めてください';updateUI()
+}
+function cellDraw(){
+ const img=mctx.createImageData(N,N),p=img.data;
+ for(let i=0;i<NN;i++){const owner=cell[i];if(owner<0)continue;const rgb=[[56,223,181],[255,119,110],[182,148,255],[106,168,255]][owner];const b=i*4;const shade=age[i]>180?.65:1;p[b]=rgb[0]*shade;p[b+1]=rgb[1]*shade;p[b+2]=rgb[2]*shade;p[b+3]=235}
+ mctx.putImageData(img,0,0);dirty=false
+}
+function render(){if(!teams.length)return;
+ if(dirty)cellDraw();const S=640,scale=600/N;ctx.clearRect(0,0,S,S);
+ const grad=ctx.createRadialGradient(320,320,100,320,320,306);grad.addColorStop(0,'#173540');grad.addColorStop(1,'#08212b');ctx.beginPath();ctx.arc(320,320,302,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+ ctx.save();ctx.beginPath();ctx.arc(320,320,300,0,Math.PI*2);ctx.clip();ctx.imageSmoothingEnabled=false;ctx.drawImage(mini,20,20,600,600);
+ for(const s of shields){if(s.until<=time)continue;const xx=20+(s.x+.5)*scale,yy=20+(s.y+.5)*scale;ctx.beginPath();ctx.arc(xx,yy,s.radius*scale,0,Math.PI*2);ctx.strokeStyle=teams[s.owner].color;ctx.globalAlpha=.35;ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=1}
+ for(const n of nodes){const xx=20+(n.x+.5)*scale,yy=20+(n.y+.5)*scale;ctx.beginPath();ctx.arc(xx,yy,5.1*scale,0,Math.PI*2);ctx.fillStyle=n.owner<0?'#f9c86a29':teams[n.owner].color+'33';ctx.fill();ctx.strokeStyle=n.owner<0?'#f9c86a':teams[n.owner].color;ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#071923';ctx.beginPath();ctx.arc(xx,yy,16,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff9dd';ctx.font='bold 17px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(n.label,xx,yy)}
+ if(teams[0].rally){const q=teams[0].rally,xx=20+(q.x+.5)*scale,yy=20+(q.y+.5)*scale;ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(xx,yy,11,0,Math.PI*2);ctx.moveTo(xx-17,yy);ctx.lineTo(xx+17,yy);ctx.moveTo(xx,yy-17);ctx.lineTo(xx,yy+17);ctx.stroke()}
+ ctx.restore();ctx.beginPath();ctx.arc(320,320,301,0,Math.PI*2);ctx.lineWidth=5;ctx.strokeStyle='#40747b';ctx.stroke()
+}
+function updateNodes(){for(const n of nodes){const counts=[0,0,0,0];let occupied=0;for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){if(dx*dx+dy*dy>16)continue;const o=cell[idx(n.x+dx,n.y+dy)];if(o>=0){counts[o]++;occupied++}}
+ const max=Math.max(...counts),winner=counts.indexOf(max);n.owner=max>=10&&max>occupied/2?winner:-1;
+ if(n.owner>=0){const t=teams[n.owner];t.score+=1+t.nodeBonus;t.energy=Math.min(100,t.energy+2)}
+ }
+}
+function nearestNode(t){const candidates=nodes.slice().sort((a,b)=>(a.owner===t.id)-(b.owner===t.id));return candidates[(Math.random()*Math.min(2,candidates.length))|0]}
+function aiLogic(){for(const t of teams.slice(1)){
+ if(t.cells<=0)continue;
+ if(!t.rally||time-(t.rallyAt||0)>9){const n=nearestNode(t);t.rally={x:n.x,y:n.y};t.rallyAt=time}
+ if(t.energy>50&&Math.random()<.16){const enemy=fronts[t.id].find(i=>{const {x,y}=coords(i);return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>inside(x+dx,y+dy)&&cell[idx(x+dx,y+dy)]>=0&&cell[idx(x+dx,y+dy)]!==t.id)});
+ if(enemy!==undefined){const {x,y}=coords(enemy);useAbility(t,'toxin',x,y)}else if(t.energy>68){const n=nearestNode(t);useAbility(t,'spore',n.x,n.y)}
+ }
+ }}
+function evolve(t,gene){gene.apply(t);t.chosen.add(gene.id)}
+function showDraft(){state='draft';draftIndex++;for(const t of teams.slice(1)){const choices=genePool.filter(g=>!t.chosen.has(g.id));evolve(t,rand(choices))}
+ const available=genePool.filter(g=>!teams[0].chosen.has(g.id)).sort(()=>Math.random()-.5).slice(0,teams[0].type.id==='adapter'?4:3);
+ modal.innerHTML='<h1>進化の分岐</h1><p>新しい性質を一つ選んでください。選択中は試合が止まります。</p><div class="choose" id="draftCards"></div><p class="small">試合中に合計3回、進化を選べます。</p>';
+ const box=el('draftCards');for(const g of available){const b=document.createElement('button');b.className='card';b.innerHTML=`<strong>${g.name}</strong><span>${g.desc}</span>`;b.addEventListener('click',()=>{evolve(teams[0],g);overlay.classList.add('hide');state='running';last=0;setMessage(`${g.name}を獲得しました`,3);updateUI()});box.appendChild(b)}overlay.classList.remove('hide')
+}
+function finish(winner){state='over';aim=null;const won=winner===0;modal.innerHTML=`<h1>${won?'勝利':'敗北'}</h1><p>${won?'栄養核の争奪を制しました。':'最も研究点を得たのは'+teams[winner].name+'です。'} あなたの研究点は${Math.floor(teams[0].score)}点でした。</p><div class="choose" id="finalRows"></div><div class="modalActions"><button class="primaryBtn" id="again">もう一度遊ぶ</button></div>`;
+ const rows=el('finalRows');for(const t of teams){const row=document.createElement('div');row.className='point';row.textContent=`${t.name}：${Math.floor(t.score)}点・${t.cells}マス`;rows.appendChild(row)}el('again').addEventListener('click',showIntro);overlay.classList.remove('hide')
+}
+function simulation(){time+=STEP;for(let i=0;i<4;i++)fronts[i]=[];
+ for(let i=0;i<NN;i++){const owner=cell[i];if(owner<0)continue;age[i]++;
+ if(age[i]>220&&Math.random()<.003){cell[i]=-1;age[i]=0;dirty=true;continue}
+ const {x,y}=coords(i);if([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>inside(x+dx,y+dy)&&cell[idx(x+dx,y+dy)]!==owner))fronts[owner].push(i)
+ }
+ for(const t of teams){t.cells=0;t.energy=Math.min(100,t.energy+STEP*(1+.012*Math.sqrt(fronts[t.id].length))*t.metabolism);
+ const frontier=fronts[t.id];const attempts=Math.min(36,5+Math.ceil(frontier.length/13));
+ for(let a=0;a<attempts&&frontier.length;a++){
+ const i=rand(frontier),{x,y}=coords(i),dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+ if(t.rally&&Math.random()<.72){dirs.sort((u,v)=>((x+u[0]-t.rally.x)**2+(y+u[1]-t.rally.y)**2)-((x+v[0]-t.rally.x)**2+(y+v[1]-t.rally.y)**2));if(Math.random()<.22)dirs.reverse()}
+ else dirs.sort(()=>Math.random()-.5);
+ for(const [dx,dy] of dirs){const nx=x+dx,ny=y+dy;if(!inside(nx,ny))continue;const j=idx(nx,ny),enemy=cell[j];if(enemy===t.id)continue;
+ const toward=t.rally&&((nx-t.rally.x)**2+(ny-t.rally.y)**2)<((x-t.rally.x)**2+(y-t.rally.y)**2);
+ const bonus=toward?1+.35*t.signal:1;
+ const shielded=enemy>=0&&affectedShield(nx,ny,enemy);
+ const chance=enemy<0?.43*t.growth*bonus:clamp((.28+.06*(t.attack-teams[enemy].defense)-(shielded?.19:0))*bonus,.025,.72);
+ if(Math.random()<chance){cell[j]=t.id;age[j]=0;dirty=true}break
+ }
+ }
+ }
+ for(const i of cell)if(i>=0)teams[i].cells++;
+ shields=shields.filter(s=>s.until>time);
+ if(((time*10+1e-6)|0)%10===0){updateNodes();aiLogic()}
+ if(draftIndex<3&&time>=[20,45,70][draftIndex]){showDraft();updateUI();return}
+ if(teams[0].cells===0){finish(teams.slice(1).sort((a,b)=>b.score-a.score)[0].id);updateUI();return}
+ const reached=teams.find(t=>t.score>=WIN_SCORE);if(reached){finish(reached.id);updateUI();return}
+ if(time>=DURATION){const sorted=teams.slice().sort((a,b)=>b.score-a.score||b.cells-a.cells);finish(sorted[0].id);updateUI();return}
+ updateUI()
+}
+function updateUI(){
+ el('clock').textContent=`${Math.floor(Math.max(0,DURATION-time)/60)}:${String(Math.ceil(Math.max(0,DURATION-time)%60)).padStart(2,'0')}`;
+ if(!teams.length)return;const t=teams[0];el('myScore').textContent=`${Math.min(WIN_SCORE,Math.floor(t.score))} / ${WIN_SCORE}`;el('energy').textContent=Math.floor(t.energy);
+ el('points').innerHTML=nodes.map(n=>`<div class="point"><span class="tag">${n.label}</span><span>${n.owner<0?'中立':teams[n.owner].name}</span></div>`).join('');
+ el('teams').innerHTML=teams.map(t=>`<div class="teamRow"><i class="swatch" style="background:${t.color}"></i><div>${t.name}<div class="track"><i style="width:${clamp(t.score/WIN_SCORE*100,0,100)}%;background:${t.color}"></i></div></div><strong>${Math.floor(t.score)}点</strong></div>`).join('');
+ abilityDefs.forEach((d,i)=>{const b=el('abilities').children[i];if(!b)return;const remain=Math.max(0,(t.cool[d.id]||0)-time),afford=t.energy>=cost(t,d);b.disabled=state!=='running'||!afford||remain>0;b.classList.toggle('active',aim===d.id);b.children[0].textContent=`${d.key} ${d.id==='special'?t.type.special:d.name}`;b.children[1].textContent=d.id==='special'?t.type.specialDesc:d.desc;b.children[2].textContent=remain>0?`${Math.ceil(remain)}秒後`:`養分 ${cost(t,d)}`});
+ if(noticeUntil<time)el('message').textContent='';
+}
+function showIntro(){state='intro';aim=null;el('pause').textContent='一時停止';modal.innerHTML='<h1>菌コロニー バトル：進化戦</h1><p>栄養核を奪い、220研究点を先取してください。前線の誘導と技の使いどころ、3回の進化選択で勝敗が変わります。</p><div class="choose" id="speciesCards"></div><p class="small">1試合は最長2分30秒。技を選んだ後にシャーレをタップします。技を選んでいないときは進軍地点を変更します。</p>';
+ const box=el('speciesCards');for(const s of species){const b=document.createElement('button');b.className='card';b.innerHTML=`<strong>${s.name}</strong><span>${s.desc}<br>固有技：${s.special}　${s.specialDesc}</span>`;b.addEventListener('click',()=>reset(s));box.appendChild(b)}overlay.classList.remove('hide')
+}
+function resize(){const rect=canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),size=Math.max(1,rect.width);canvas.width=Math.round(size*dpr);canvas.height=Math.round(size*dpr);ctx.setTransform(canvas.width/640,0,0,canvas.height/640,0,0);render()}
+canvas.addEventListener('click',e=>{if(state!=='running')return;const r=canvas.getBoundingClientRect(),px=(e.clientX-r.left)*640/r.width,py=(e.clientY-r.top)*640/r.height,x=Math.floor((px-20)*N/600),y=Math.floor((py-20)*N/600);
+ if(!inside(x,y)){setMessage('シャーレ内をタップしてください');return}
+ if(aim){useAbility(teams[0],aim,x,y);el('arenaHint').textContent=aim?'前線近くの地点を指定してください':'シャーレをタップして進軍先を決めてください'}
+ else{teams[0].rally={x,y};setMessage('進軍先を変更しました',2);el('arenaHint').textContent='進軍先を変更するには、別の地点をタップ'}
+});
+el('abilities').addEventListener('click',e=>{const b=e.target.closest('[data-ability]');if(b)chooseAim(b.dataset.ability)});
+el('cancel').addEventListener('click',()=>{aim=null;el('arenaHint').textContent='シャーレをタップして進軍先を決めてください';updateUI()});
+el('pause').addEventListener('click',()=>{if(state==='running'){state='paused';el('pause').textContent='再開';setMessage('一時停止中',300)}else if(state==='paused'){state='running';last=0;el('pause').textContent='一時停止';setMessage('再開しました',2)}updateUI()});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){aim=null;updateUI()}const i=['q','w','e','r'].indexOf(e.key.toLowerCase());if(i>=0)chooseAim(abilityDefs[i].id)});
+window.addEventListener('resize',resize);
+function loop(ts){if(!last)last=ts;const dt=Math.min(.2,(ts-last)/1000);last=ts;if(state==='running'){acc+=dt;while(acc>=STEP&&state==='running'){simulation();acc-=STEP}}if(teams.length)render();requestAnimationFrame(loop)}
+showIntro();resize();requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
